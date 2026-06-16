@@ -109,7 +109,7 @@ class YaYaPlugin(Star):
         rules.append(rule)
         _save_rules(rules)
         logger.info(f"新增关键词规则: {keyword}")
-        return jsonify({"rule": rule})
+        return jsonify({"status": "ok", "data": {"rule": rule}})
 
     async def api_update_rule(self):
         """POST /rules/update — 更新一条规则"""
@@ -128,12 +128,7 @@ class YaYaPlugin(Star):
                 rule["reply_images"] = (payload.get("reply_images") or "").strip()
                 _save_rules(rules)
                 logger.info(f"更新关键词规则: {keyword}")
-                return jsonify({"rule": rule})
-        return jsonify({"status": "error", "message": "规则不存在"}), 404
-
-    async def api_delete_rule(self):
-        """POST /rules/delete — 删除一条规则"""
-        payload = (await request.get_json(silent=True)) or {}
+        return jsonify({"status": "ok", "data": {"rule": rule}})
         rule_id = (payload.get("id") or "").strip()
         if not rule_id:
             return jsonify({"status": "error", "message": "规则 ID 不能为空"}), 400
@@ -143,7 +138,7 @@ class YaYaPlugin(Star):
             return jsonify({"status": "error", "message": "规则不存在"}), 404
         _save_rules(new_rules)
         logger.info(f"删除关键词规则: {rule_id}")
-        return jsonify({"deleted": rule_id})
+        return jsonify({"status": "ok", "data": {"deleted": rule_id}})
 
     # ==================== 消息监听 ====================
 

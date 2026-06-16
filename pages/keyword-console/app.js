@@ -105,7 +105,22 @@ function renderRules() {
   rulesList.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
-      handleDelete(id);
+      const isConfirming = btn.dataset.confirming === "true";
+      if (!isConfirming) {
+        // 第一次点击：进入确认状态
+        btn.dataset.confirming = "true";
+        btn.textContent = "确认删除？";
+        btn.style.background = "#c0392b";
+        clearTimeout(btn._confirmTimer);
+        btn._confirmTimer = setTimeout(() => {
+          resetDeleteBtn(btn);
+        }, 3000);
+      } else {
+        // 第二次点击：执行删除
+        clearTimeout(btn._confirmTimer);
+        resetDeleteBtn(btn);
+        handleDelete(id);
+      }
     });
   });
 }
@@ -185,16 +200,23 @@ async function handleSave() {
   }
 }
 
+// ==================== 删除按钮状态重置 ====================
+function resetDeleteBtn(btn) {
+  btn.dataset.confirming = "false";
+  btn.textContent = "删除";
+  btn.style.background = "";
+}
+
 // ==================== 删除 ====================
 async function handleDelete(id) {
-  if (!confirm("确定要删除这条规则吗？此操作不可恢复。")) return;
-
+  console.log("[YaYa] 删除规则:", id);
   try {
-    await bridge.apiPost("rules/delete", { id });
+    const result = await bridge.apiPost("rules/delete", { id });
+    console.log("[YaYa] 删除响应:", result);
     showToast("规则已删除", "success");
     await loadRules();
   } catch (err) {
-    console.error("删除规则失败:", err);
+    console.error("[YaYa] 删除规则失败:", err);
     showToast("删除失败: " + err.message, "error");
   }
 }
