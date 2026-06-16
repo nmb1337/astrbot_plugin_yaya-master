@@ -6,8 +6,8 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from astrbot.api.message_components import Plain, Image
-from astrbot.api.web import json_response, error_response, request
 from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
+from quart import jsonify, request
 
 PLUGIN_NAME = "astrbot_plugin_yaya"
 RULES_FILE = "keyword_rules.json"
@@ -90,14 +90,14 @@ class YaYaPlugin(Star):
     async def api_list_rules(self):
         """GET /rules — 返回所有规则"""
         rules = _load_rules()
-        return json_response({"rules": rules, "total": len(rules)})
+        return jsonify({"rules": rules, "total": len(rules)})
 
     async def api_add_rule(self):
         """POST /rules/add — 新增一条规则"""
-        payload = await request.json(default={})
+        payload = (await request.get_json(silent=True)) or {}
         keyword = (payload.get("keyword") or "").strip()
         if not keyword:
-            return error_response("关键词不能为空", status_code=400)
+            return jsonify({"status": "error", "message": "关键词不能为空"}), 400
 
         rule = {
             "id": uuid.uuid4().hex[:12],
@@ -109,41 +109,41 @@ class YaYaPlugin(Star):
         rules.append(rule)
         _save_rules(rules)
         logger.info(f"新增关键词规则: {keyword}")
-        return json_response({"rule": rule})
+        return jsonify({"rule": rule})
 
     async def api_update_rule(self):
         """POST /rules/update — 更新一条规则"""
-        payload = await request.json(default={})
+        payload = (await request.get_json(silent=True)) or {}
         rule_id = (payload.get("id") or "").strip()
         if not rule_id:
-            return error_response("规则 ID 不能为空", status_code=400)
+            return jsonify({"status": "error", "message": "规则 ID 不能为空"}), 400
         rules = _load_rules()
         for rule in rules:
             if rule.get("id") == rule_id:
                 keyword = (payload.get("keyword") or "").strip()
                 if not keyword:
-                    return error_response("关键词不能为空", status_code=400)
+                    return jsonify({"status": "error", "message": "关键词不能为空"}), 400
                 rule["keyword"] = keyword
                 rule["reply_text"] = (payload.get("reply_text") or "").strip()
                 rule["reply_images"] = (payload.get("reply_images") or "").strip()
                 _save_rules(rules)
                 logger.info(f"更新关键词规则: {keyword}")
-                return json_response({"rule": rule})
-        return error_response("规则不存在", status_code=404)
+                return jsonify({"rule": rule})
+        return jsonify({"status": "error", "message": "规则不存在"}), 404
 
     async def api_delete_rule(self):
         """POST /rules/delete — 删除一条规则"""
-        payload = await request.json(default={})
+        payload = (await request.get_json(silent=True)) or {}
         rule_id = (payload.get("id") or "").strip()
         if not rule_id:
-            return error_response("规则 ID 不能为空", status_code=400)
+            return jsonify({"status": "error", "message": "规则 ID 不能为空"}), 400
         rules = _load_rules()
         new_rules = [r for r in rules if r.get("id") != rule_id]
         if len(new_rules) == len(rules):
-            return error_response("规则不存在", status_code=404)
+            return jsonify({"status": "error", "message": "规则不存在"}), 404
         _save_rules(new_rules)
         logger.info(f"删除关键词规则: {rule_id}")
-        return json_response({"deleted": rule_id})
+        return jsonify({"deleted": rule_id})
 
     # ==================== 消息监听 ====================
 
