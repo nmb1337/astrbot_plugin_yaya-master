@@ -1,7 +1,7 @@
 name: astrbot_plugin_yaya # 插件唯一识别名，以 astrbot_plugin_ 前缀开头
 display_name: YaYa 关键词回复 # 用于展示的名字
-short_desc: 群聊关键词自动回复插件，支持多图片回复与群聊白名单 # 插件市场短描述
-desc: 群聊关键词自动回复插件，支持在配置面板设置触发关键词、回复文本、多张图片，支持群聊白名单，并可选择是否同时使用 AI 大模型回复。 # 插件简短描述
-version: v1.0.0 # 插件版本号
+short_desc: 群聊关键词自动回复插件，支持 Plugin Page 管理规则、多图片回复与群聊白名单 # 插件市场短描述
+desc: 群聊关键词自动回复插件，使用 Plugin Page（keyword-console）管理关键词回复规则，支持多图片回复、群聊白名单，并可选择是否同时使用 AI 大模型回复。 # 插件简短描述
+version: v2.0.0 # 插件版本号
 author: 贾梦 # 作者
-repo: https://github.com/yourname/astrbot_plugin_yaya # 插件的仓库地址
+repo: https://github.com/nmb1337/astrbot_plugin_yaya-master # 插件的仓库地址

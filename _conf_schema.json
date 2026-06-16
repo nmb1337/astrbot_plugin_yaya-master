@@ -1,35 +1,4 @@
 {
-  "keywords": {
-    "type": "template_list",
-    "description": "关键词回复规则列表",
-    "templates": {
-      "keyword_rule": {
-        "name": "关键词规则",
-        "hint": "添加一条关键词自动回复规则，支持回复文本和多张图片",
-        "display_item": "keyword",
-        "items": {
-          "keyword": {
-            "description": "触发关键词",
-            "type": "string",
-            "hint": "当群消息中包含此关键词时触发回复",
-            "default": ""
-          },
-          "reply_text": {
-            "description": "回复文本内容",
-            "type": "text",
-            "hint": "触发关键词后自动回复的文本",
-            "default": ""
-          },
-          "reply_images": {
-            "description": "回复图片URL列表",
-            "type": "text",
-            "hint": "每行填写一个图片URL（支持 http/https 链接或本地路径），可填多行",
-            "default": ""
-          }
-        }
-      }
-    }
-  },
   "group_whitelist": {
     "description": "群聊白名单",
     "type": "text",

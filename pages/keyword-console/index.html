@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>关键词回复控制台</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <h1>🎯 关键词回复控制台</h1>
+        <p class="subtitle">管理群聊关键词自动回复规则（支持文本 + 多图片）</p>
+      </header>
+
+      <div class="toolbar">
+        <button id="btn-add" class="btn btn-primary">+ 新增规则</button>
+        <span id="rule-count" class="count-badge">共 0 条规则</span>
+      </div>
+
+      <!-- 规则列表 -->
+      <div id="rules-list" class="rules-list">
+        <div class="empty-state">暂无规则，点击上方按钮添加</div>
+      </div>
+
+      <!-- 编辑弹窗 -->
+      <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+          <div class="modal-header">
+            <h2 id="modal-title">新增规则</h2>
+            <button id="btn-close-modal" class="btn-icon" title="关闭">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="edit-id" />
+
+            <label for="input-keyword">触发关键词 <span class="required">*</span></label>
+            <input
+              type="text"
+              id="input-keyword"
+              placeholder="例如：菜单、帮助、文档"
+              maxlength="100"
+            />
+
+            <label for="input-text">回复文本</label>
+            <textarea
+              id="input-text"
+              rows="3"
+              placeholder="触发后自动回复的文本内容"
+            ></textarea>
+
+            <label for="input-images">
+              回复图片 URL
+              <span class="hint">（每行一个，支持 http/https 链接或本地路径）</span>
+            </label>
+            <textarea
+              id="input-images"
+              rows="4"
+              placeholder="https://example.com/pic1.jpg&#10;/path/to/local/image.png"
+            ></textarea>
+          </div>
+          <div class="modal-footer">
+            <button id="btn-cancel" class="btn">取消</button>
+            <button id="btn-save" class="btn btn-primary">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
