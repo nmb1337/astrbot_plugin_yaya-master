@@ -128,7 +128,12 @@ class YaYaPlugin(Star):
                 rule["reply_images"] = (payload.get("reply_images") or "").strip()
                 _save_rules(rules)
                 logger.info(f"更新关键词规则: {keyword}")
-        return jsonify({"status": "ok", "data": {"rule": rule}})
+                return jsonify({"status": "ok", "data": {"rule": rule}})
+        return jsonify({"status": "error", "message": "规则不存在"}), 404
+
+    async def api_delete_rule(self):
+        """POST /rules/delete — 删除一条规则"""
+        payload = (await request.get_json(silent=True)) or {}
         rule_id = (payload.get("id") or "").strip()
         if not rule_id:
             return jsonify({"status": "error", "message": "规则 ID 不能为空"}), 400
