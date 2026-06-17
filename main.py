@@ -187,7 +187,10 @@ class YaYaPlugin(Star):
 
         chain = []
         if reply_text.strip():
-            chain.append(Plain(reply_text.strip()))
+            # 将 \n 替换为 \r，避免 aiocqhttp 适配器 strip 掉换行符
+            # 参考: https://docs.astrbot.app/dev/star/guides/send-message.html
+            text = reply_text.strip().replace("\n", "\r")
+            chain.append(Plain(text))
 
         if reply_images_str.strip():
             image_urls = [
