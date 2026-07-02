@@ -1,4 +1,4 @@
-// ==================== YaYa 关键词回复控制台 — Plugin Page JS ====================
+// ==================== YaYa 多级菜单控制台 v3.0 — Plugin Page JS ====================
 
 const bridge = window.AstrBotPluginPage;
 
@@ -13,6 +13,8 @@ const btnAdd = $("#btn-add");
 const modalOverlay = $("#modal-overlay");
 const modalTitle = $("#modal-title");
 const editId = $("#edit-id");
+const editParent = $("#edit-parent");
+const parentInfo = $("#parent-info");
 const inputKeyword = $("#input-keyword");
 const inputText = $("#input-text");
 const inputImages = $("#input-images");
@@ -24,14 +26,14 @@ const btnCloseModal = $("#btn-close-modal");
 const toast = $("#toast");
 
 // ==================== 状态 ====================
-let rules = [];
+let treeData = [];       // 嵌套树
+let flatNodes = [];      // 扁平节点列表
 let toastTimer = null;
 
 // ==================== 初始化 ====================
 async function init() {
   const context = await bridge.ready();
-  console.log("YaYa keyword-console ready:", context);
-
+  console.log("YaYa v3.0 keyword-console ready:", context);
   bindEvents();
   await loadRules();
 }
@@ -51,72 +53,120 @@ function bindEvents() {
 async function loadRules() {
   try {
     const data = await bridge.apiGet("rules");
-    rules = data.rules || [];
-    renderRules();
+    flatNodes = data.nodes || [];
+    treeData = data.tree || [];
+    renderTree();
   } catch (err) {
     console.error("加载规则失败:", err);
     showToast("加载规则失败: " + err.message, "error");
   }
 }
 
-// ==================== 渲染 ====================
-function renderRules() {
-  ruleCount.textContent = `共 ${rules.length} 条规则`;
+// ==================== 树形渲染 ====================
+function renderTree() {
+  const total = flatNodes.length;
+  const roots = treeData.length;
+  ruleCount.textContent = `共 ${total} 个节点（${roots} 个根节点）`;
 
-  if (rules.length === 0) {
-    rulesList.innerHTML = '<div class="empty-state">暂无规则，点击上方按钮添加</div>';
+  if (total === 0) {
+    rulesList.innerHTML =
+      '<div class="empty-state">暂无节点，点击上方按钮添加根节点</div>';
     return;
   }
 
-  rulesList.innerHTML = rules
-    .map(
-      (rule) => `
-    <div class="rule-card" data-id="${escapeHtml(rule.id)}">
-      <div class="rule-header">
-        <span class="rule-keyword">🔑 ${escapeHtml(rule.keyword)}</span>
-        <div class="rule-actions">
-          <button class="btn btn-sm" data-action="edit" data-id="${escapeHtml(rule.id)}">编辑</button>
-          <button class="btn btn-sm btn-danger" data-action="delete" data-id="${escapeHtml(rule.id)}">删除</button>
-        </div>
-      </div>
-      <div class="rule-body">
-        ${
-          rule.reply_text
-            ? `<div class="rule-text">${escapeHtml(rule.reply_text)}</div>`
-            : ""
-        }
-        ${renderImageTags(rule.reply_images)}
-      </div>
-      <div class="rule-meta">ID: ${escapeHtml(rule.id)}</div>
-    </div>
-  `
-    )
+  rulesList.innerHTML = treeData
+    .map((node) => renderNode(node, 0))
     .join("");
 
-  // 绑定卡片内按钮事件
-  rulesList.querySelectorAll("[data-action='edit']").forEach((btn) => {
+  // 绑定所有按钮事件
+  bindTreeEvents();
+}
+
+function renderNode(node, depth) {
+  const hasChildren = node.children && node.children.length > 0;
+  const childCount = hasChildren ? node.children.length : 0;
+  const isLeaf = !hasChildren;
+  const icon = isLeaf ? "📄" : "📁";
+
+  let html = `
+  <div class="tree-node" data-id="${escapeHtml(node.id)}" data-depth="${depth}">
+    <div class="tree-row" style="padding-left: ${depth * 24 + 8}px;">
+      <span class="tree-toggle" data-id="${escapeHtml(node.id)}">
+        ${hasChildren ? "▼" : "　"}
+      </span>
+      <span class="tree-icon">${icon}</span>
+      <span class="tree-keyword">${escapeHtml(node.keyword)}</span>
+      ${childCount > 0 ? `<span class="tree-badge">${childCount} 个子项</span>` : ""}
+      ${isLeaf && node.reply_text
+        ? `<span class="tree-preview">— ${escapeHtml(node.reply_text).substring(0, 30)}</span>`
+        : ""}
+      <div class="tree-actions">
+        <button class="btn btn-sm" data-action="add-child" data-id="${escapeHtml(node.id)}" title="添加子节点">+子</button>
+        <button class="btn btn-sm" data-action="edit" data-id="${escapeHtml(node.id)}">编辑</button>
+        <button class="btn btn-sm btn-danger" data-action="delete" data-id="${escapeHtml(node.id)}">删除</button>
+      </div>
+    </div>`;
+
+  if (hasChildren) {
+    html += `<div class="tree-children" data-parent="${escapeHtml(node.id)}">`;
+    for (const child of node.children) {
+      html += renderNode(child, depth + 1);
+    }
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function bindTreeEvents() {
+  // 折叠/展开
+  rulesList.querySelectorAll(".tree-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      const rule = rules.find((r) => r.id === id);
-      if (rule) openModal(rule);
+      const nodeId = btn.dataset.id;
+      const nodeEl = rulesList.querySelector(`.tree-node[data-id="${nodeId}"]`);
+      const childrenEl = nodeEl?.querySelector(".tree-children");
+      if (childrenEl) {
+        const isHidden = childrenEl.style.display === "none";
+        childrenEl.style.display = isHidden ? "" : "none";
+        btn.textContent = isHidden ? "▼" : "▶";
+      }
     });
   });
 
+  // 编辑
+  rulesList.querySelectorAll("[data-action='edit']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const node = flatNodes.find((n) => n.id === id);
+      if (node) openModal(node);
+    });
+  });
+
+  // 添加子节点
+  rulesList.querySelectorAll("[data-action='add-child']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const parentId = btn.dataset.id;
+      const parent = flatNodes.find((n) => n.id === parentId);
+      openModal(null, parent);
+    });
+  });
+
+  // 删除
   rulesList.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
       const isConfirming = btn.dataset.confirming === "true";
       if (!isConfirming) {
-        // 第一次点击：进入确认状态
+        const node = flatNodes.find((n) => n.id === id);
+        const cascade = countDescendants(id);
         btn.dataset.confirming = "true";
-        btn.textContent = "确认删除？";
+        btn.textContent = cascade > 0
+          ? `确认删除(${cascade + 1}项)?` : "确认删除?";
         btn.style.background = "#c0392b";
         clearTimeout(btn._confirmTimer);
-        btn._confirmTimer = setTimeout(() => {
-          resetDeleteBtn(btn);
-        }, 3000);
+        btn._confirmTimer = setTimeout(() => resetDeleteBtn(btn), 3000);
       } else {
-        // 第二次点击：执行删除
         clearTimeout(btn._confirmTimer);
         resetDeleteBtn(btn);
         handleDelete(id);
@@ -125,37 +175,52 @@ function renderRules() {
   });
 }
 
-function renderImageTags(imagesStr) {
-  if (!imagesStr || !imagesStr.trim()) return "";
-  const urls = imagesStr
-    .split("\n")
-    .map((u) => u.trim())
-    .filter(Boolean);
-  if (urls.length === 0) return "";
-  return (
-    '<div class="rule-images">' +
-    urls
-      .map((url) => `<span class="rule-image-tag" title="${escapeHtml(url)}">🖼️ ${escapeHtml(url)}</span>`)
-      .join("") +
-    "</div>"
-  );
+function countDescendants(parentId) {
+  let count = 0;
+  for (const n of flatNodes) {
+    if (n.parent_id === parentId) {
+      count += 1 + countDescendants(n.id);
+    }
+  }
+  return count;
 }
 
 // ==================== Modal 操作 ====================
-function openModal(rule = null) {
-  if (rule) {
-    modalTitle.textContent = "编辑规则";
-    editId.value = rule.id;
-    inputKeyword.value = rule.keyword || "";
-    inputText.value = rule.reply_text || "";
-    inputImages.value = rule.reply_images || "";
+function openModal(node = null, parent = null) {
+  editId.value = "";
+  editParent.value = "";
+  parentInfo.textContent = "";
+
+  if (node) {
+    // 编辑模式
+    modalTitle.textContent = "编辑节点";
+    editId.value = node.id;
+    inputKeyword.value = node.keyword || "";
+    inputText.value = node.reply_text || "";
+    inputImages.value = node.reply_images || "";
+    if (node.parent_id) {
+      const p = flatNodes.find((n) => n.id === node.parent_id);
+      parentInfo.textContent = `父节点: ${p ? p.keyword : node.parent_id}`;
+    } else {
+      parentInfo.textContent = "根节点（无父节点）";
+    }
+  } else if (parent) {
+    // 添加子节点模式
+    modalTitle.textContent = `添加子节点`;
+    editParent.value = parent.id;
+    parentInfo.textContent = `父节点: ${parent.keyword}`;
+    inputKeyword.value = "";
+    inputText.value = "";
+    inputImages.value = "";
   } else {
-    modalTitle.textContent = "新增规则";
-    editId.value = "";
+    // 添加根节点模式
+    modalTitle.textContent = "新增根节点";
+    parentInfo.textContent = "根节点（无父节点）";
     inputKeyword.value = "";
     inputText.value = "";
     inputImages.value = "";
   }
+
   modalOverlay.classList.remove("hidden");
   inputKeyword.focus();
 }
@@ -167,6 +232,7 @@ function closeModal() {
 // ==================== 保存 ====================
 async function handleSave() {
   const id = editId.value.trim();
+  const parentId = editParent.value.trim() || null;
   const keyword = inputKeyword.value.trim();
   const replyText = inputText.value.trim();
   const replyImages = inputImages.value.trim();
@@ -179,6 +245,7 @@ async function handleSave() {
 
   const payload = {
     id: id || undefined,
+    parent_id: parentId || undefined,
     keyword,
     reply_text: replyText,
     reply_images: replyImages,
@@ -187,20 +254,20 @@ async function handleSave() {
   try {
     if (id) {
       await bridge.apiPost("rules/update", payload);
-      showToast("规则已更新", "success");
+      showToast("节点已更新", "success");
     } else {
       await bridge.apiPost("rules/add", payload);
-      showToast("规则已添加", "success");
+      showToast(parentId ? "子节点已添加" : "根节点已添加", "success");
     }
     closeModal();
     await loadRules();
   } catch (err) {
-    console.error("保存规则失败:", err);
+    console.error("保存失败:", err);
     showToast("保存失败: " + err.message, "error");
   }
 }
 
-// ==================== 删除按钮状态重置 ====================
+// ==================== 删除按钮重置 ====================
 function resetDeleteBtn(btn) {
   btn.dataset.confirming = "false";
   btn.textContent = "删除";
@@ -209,14 +276,17 @@ function resetDeleteBtn(btn) {
 
 // ==================== 删除 ====================
 async function handleDelete(id) {
-  console.log("[YaYa] 删除规则:", id);
+  console.log("[YaYa] 删除节点:", id);
   try {
     const result = await bridge.apiPost("rules/delete", { id });
-    console.log("[YaYa] 删除响应:", result);
-    showToast("规则已删除", "success");
+    const cascade = (result && result.cascade) || 0;
+    showToast(
+      cascade > 0 ? `已删除节点及 ${cascade} 个子节点` : "节点已删除",
+      "success"
+    );
     await loadRules();
   } catch (err) {
-    console.error("[YaYa] 删除规则失败:", err);
+    console.error("[YaYa] 删除失败:", err);
     showToast("删除失败: " + err.message, "error");
   }
 }

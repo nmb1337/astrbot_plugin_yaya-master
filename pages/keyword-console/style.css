@@ -145,11 +145,10 @@ body {
   color: var(--text);
 }
 
-/* ===== Rules List ===== */
+/* ===== Tree View ===== */
 .rules-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .empty-state {
@@ -159,76 +158,86 @@ body {
   font-size: 0.9rem;
 }
 
-.rule-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-  transition: box-shadow 0.15s ease;
+.tree-node {
+  /* container */
 }
 
-.rule-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-.rule-header {
+.tree-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
+  padding: 8px 12px;
+  border-left: 2px solid transparent;
+  transition: background 0.1s ease;
 }
 
-.rule-keyword {
+.tree-row:hover {
+  background: var(--bg);
+}
+
+.tree-toggle {
+  width: 18px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.tree-toggle:hover {
+  color: var(--primary);
+}
+
+.tree-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.tree-keyword {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--primary);
   word-break: break-all;
 }
 
-.rule-actions {
-  display: flex;
-  gap: 6px;
+.tree-badge {
+  font-size: 0.7rem;
+  background: var(--primary);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
-.rule-body {
-  margin-top: 10px;
-}
-
-.rule-text {
-  font-size: 0.875rem;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.5;
-}
-
-.rule-images {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.rule-image-tag {
-  display: inline-block;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 0.75rem;
+.tree-preview {
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.rule-meta {
-  margin-top: 8px;
-  font-size: 0.75rem;
+.tree-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.tree-children {
+  /* children container */
+}
+
+/* ===== Parent Info ===== */
+.parent-info {
+  font-size: 0.8rem;
   color: var(--text-secondary);
+  padding: 4px 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  margin-bottom: 4px;
 }
 
 /* ===== Modal ===== */
